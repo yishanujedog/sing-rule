@@ -8,6 +8,7 @@ import (
 
 	"github.com/sagernet/sing-box/common/tls"
 	"github.com/sagernet/sing/common"
+	"github.com/sagernet/sing/common/logger"
 	"github.com/sagernet/srsc/adapter"
 	"github.com/sagernet/srsc/option"
 
@@ -45,11 +46,11 @@ func NewRedis(ctx context.Context, expiration time.Duration, options option.Redi
 	}
 	var stdConfig *tls.STDConfig
 	if options.TLS != nil && options.TLS.Enabled {
-		tlsConfig, err := tls.NewClient(ctx, server, common.PtrValueOrDefault(options.TLS))
+		tlsConfig, err := tls.NewClient(ctx, logger.NOP(), server, common.PtrValueOrDefault(options.TLS))
 		if err != nil {
 			return nil, err
 		}
-		stdConfig, err = tlsConfig.Config()
+		stdConfig, err = tlsConfig.STDConfig()
 		if err != nil {
 			return nil, err
 		}

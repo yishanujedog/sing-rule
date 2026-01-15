@@ -62,7 +62,7 @@ func NewRemote(ctx context.Context, options option.SourceOptions) (*Remote, erro
 	}
 	var tlsConfig tls.Config
 	if options.RemoteOptions.TLS != nil && options.RemoteOptions.TLS.Enabled {
-		tlsConfig, err = tls.NewClient(ctx, serverAddress, common.PtrValueOrDefault(options.RemoteOptions.TLS))
+		tlsConfig, err = tls.NewClient(ctx, logger.NOP(), serverAddress, common.PtrValueOrDefault(options.RemoteOptions.TLS))
 		if err != nil {
 			return nil, E.Cause(err, "create TLS config")
 		}
