@@ -157,6 +157,9 @@ func toMrs(behavior string, rules []adapter.Rule) ([]byte, error) {
 	}
 	if behavior == "domain" {
 		domainSet := domainTrie.NewDomainSet()
+		if domainSet == nil {
+			return []byte{}, nil
+		}
 		err = domainSet.WriteBin(encoder)
 		if err != nil {
 			return nil, E.Cause(err, "compile mrs")
