@@ -30,73 +30,31 @@ type Metadata struct {
 	Version   *semver.Version
 }
 
-var systemPrefixes = [...]struct {
-	prefix string
-	system System
-}{
-	{"SFA", SystemAndroid},
-	{"SFI", SystemiOS},
-	{"SFM", SystemMacOS},
-	{"SFT", SystemAppleTVOS},
-}
-
 func DetectMetadata(userAgent string) Metadata {
-	metadata := Metadata{UserAgent: userAgent}
-	metadata.System = detectSystem(userAgent)
-	platform, version := detectSingBoxPlatform(userAgent)
-	if platform != PlatformUnknown {
-		metadata.Platform = platform
-		metadata.Version = version
+	var metadata Metadata
+	metadata.UserAgent = userAgent
+	if strings.HasPrefix(userAgent, "SFA") {
+		metadata.System = SystemAndroid
+	} else if strings.HasPrefix(userAgent, "SFI") {
+		metadata.System = SystemiOS
+	} else if strings.HasPrefix(userAgent, "SFM") {
+		metadata.System = SystemMacOS
+	} else if strings.HasPrefix(userAgent, "SFT") {
+		metadata.System = SystemAppleTVOS
+	}
+	var versionName string
+	if strings.Contains(userAgent, "sing-box ") {
+		metadata.Platform = PlatformSingBox
+		versionName = strings.Split(userAgent, "sing-box ")[1]
+		if strings.Contains(versionName, ";") {
+			versionName = strings.Split(versionName, ";")[0]
+		} else {
+			versionName = strings.Split(versionName, ")")[0]
+		}
+	}
+	if semver.IsValid(versionName) {
+		version := semver.ParseVersion(versionName)
+		metadata.Version = &version
 	}
 	return metadata
-}
-
-func detectSystem(userAgent string) System {
-	for _, candidate := range systemPrefixes {
-		if strings.HasPrefix(userAgent, candidate.prefix) {
-			return candidate.system
-		}
-	}
-	return SystemUnknown
-}
-
-func detectSingBoxPlatform(userAgent string) (Platform, *semver.Version) {
-	if versionRaw, ok := extractVersionSegment(userAgent, "sing-box "); ok {
-		return PlatformSingBox, parseSemver(versionRaw)
-	}
-	if versionRaw, ok := extractVersionSegment(userAgent, "sing-box/"); ok {
-		return PlatformSingBox, parseSemver(versionRaw)
-	}
-	return PlatformUnknown, nil
-}
-
-func extractVersionSegment(userAgent, marker string) (string, bool) {
-	idx := strings.Index(userAgent, marker)
-	if idx == -1 {
-		return "", false
-	}
-	remainder := userAgent[idx+len(marker):]
-	trimmed := trimAtFirstDelimiter(remainder)
-	if trimmed == "" {
-		return "", false
-	}
-	return trimmed, true
-}
-
-func trimAtFirstDelimiter(source string) string {
-	end := len(source)
-	for _, delimiter := range []string{";", ")"} {
-		if idx := strings.Index(source, delimiter); idx >= 0 && idx < end {
-			end = idx
-		}
-	}
-	return strings.TrimSpace(source[:end])
-}
-
-func parseSemver(version string) *semver.Version {
-	if version == "" || !semver.IsValid(version) {
-		return nil
-	}
-	parsed := semver.ParseVersion(version)
-	return &parsed
 }
