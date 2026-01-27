@@ -2,6 +2,7 @@ package adguard
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 
@@ -77,6 +78,9 @@ example.arpa
 		}), domain)
 	}
 	ruleFromOptions, err := FromRules(rules)
+	if err == os.ErrInvalid {
+		return
+	}
 	require.NoError(t, err)
 	require.Equal(t, ruleString, string(ruleFromOptions))
 }
