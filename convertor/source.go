@@ -13,6 +13,7 @@ import (
 	"github.com/sagernet/srsc/adapter"
 	"github.com/sagernet/srsc/common/semver"
 	C "github.com/sagernet/srsc/constant"
+	"github.com/sagernet/srsc/convertor/internal/asn"
 )
 
 var _ adapter.Convertor = (*RuleSetSource)(nil)
@@ -43,6 +44,14 @@ func (s *RuleSetSource) To(ctx context.Context, contentRules []adapter.Rule, opt
 	if err != nil {
 		return nil, err
 	}
+
+	if options.Metadata.Platform == C.PlatformSingBox {
+		convertedRules, err = asn.ConvertIPASNToIPCIDR(ctx, convertedRules)
+		if err != nil {
+			return nil, E.Cause(err, "convert IP-ASN to IP-CIDR")
+		}
+	}
+
 	ruleSet := &option.PlainRuleSetCompat{
 		Version: boxConstant.RuleSetVersionCurrent,
 		Options: option.PlainRuleSet{
